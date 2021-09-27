@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/ACristoff/myTinyApp/issues"
   },
-  "homepage": "https://github.com/ACristoff/myTinyApp#readme"
+  "homepage": "https://github.com/ACristoff/myTinyApp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
