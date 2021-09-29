@@ -34,24 +34,11 @@ app.get("/urls/new", (req, res) => {
 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // console.log('hello, this is the request', req.body) //log the post request to delete data to the console
+  console.log('hello, this is the request', req.body) //log the post request to delete data to the console
   // console.log(req.body.shortURL)
   delete urlDatabase[req.body.shortURL]
   res.redirect(`/urls/`); 
 })
-
-// const Employee = {
-//   firstname: 'John',
-//   lastname: 'Doe'
-// };
-
-// console.log(Employee.firstname);
-// // expected output: "John"
-
-// delete Employee.firstname;
-
-// console.log(Employee.firstname);
-// // expected output: undefined
 
 app.post("/urls", (req, res) => {
   // console.log(req.body, generateRandomString());  // Log the POST request body to the console
@@ -61,6 +48,12 @@ app.post("/urls", (req, res) => {
   console.log(urlDatabase)
   res.redirect(`/urls/${newShort}`);       // Respond with 'Ok' (we will replace this)
 });
+
+app.post("/urls/:shortURL", (req, res) => {
+  console.log(req.body)
+  urlDatabase[req.body.shortURL] = req.body.longURL
+  res.redirect(`/urls/`)
+})
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
