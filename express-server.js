@@ -12,7 +12,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 function generateRandomString() {
-    return Math.random().toString(16).substr(2, 6);
+  return Math.random().toString(16).substr(2, 6);
 }
 
 //EDGE CASES
@@ -22,13 +22,27 @@ function generateRandomString() {
 //HAVE GENERATE RANDOM STRING() CHECK IF THE STRING ALREADY EXISTS, IF SO RECURSIVELY RUN UNTIL A NEW ONE IS REACHED
 
 
+//OBJECTS
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
 
+//Starting pages, fix later ???
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -43,6 +57,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 
+//
+//// POSTS
+//
 app.post("/urls/:shortURL/delete", (req, res) => {
   console.log('hello, this is the request', req.body) //log the post request to delete data to the console
   // console.log(req.body.shortURL)
@@ -65,6 +82,18 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls/`)
 })
 
+app.post(`/register`, (req, res) => {
+  // console.log(req.body)
+  const newID = generateRandomString()
+  users[newID] = {}
+  users[newID].id = newID
+  users[newID].email = req.body.email
+  users[newID].password = req.body.password
+  console.log(users)
+  res.cookie("user_id", newID)
+  res.redirect(`/urls`)
+})
+
 app.post("/login", (req, res) => {
   console.log(req.body)
   res.cookie("username", req.body.username);
@@ -78,14 +107,21 @@ app.post("/logout", (req, res) => {
 })
 
 
+//
+//// GETS
+//
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
-app.get("/hello", (req, res) => {
+app.get(`/register`, (req, res) => {
+  const templateVars = {username: req.cookies["username"]}
+  res.render('register', templateVars)
+})
 
-  
+app.get("/hello", (req, res) => {
   const templateVars = { greeting: 'Hello World!', username: req.cookies["username"] };
   res.render("hello_world", templateVars);
 });
