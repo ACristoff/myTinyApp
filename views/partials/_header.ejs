@@ -11,14 +11,10 @@
       </div>
     </div>
 
-    <% if(!userid){ %>
     <div class="navbar-login">
-    <form class="form-inline" action="/login" method="POST">
-      <div class="form-group mb-2" style="margin: auto;">
-        <input class="form-control" type="text" name="username" placeholder="username" style="width: 200px; margin: 1em">
-        <button type="submit" class="btn btn-primary">Login</button>
-      </div>
-    </form>
+    <% if(!userid){ %>
+    <a href="/login"><button type="button" value="Login">Login</button></a>
+    <a href="/register"><button type="button" value="Register">Register</button></a>
     <% } else{ %>
     <div class="userinfo">
       <p style= "font-size: 20px;"><%= users[userid].email %></p>

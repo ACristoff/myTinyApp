@@ -25,6 +25,8 @@ function generateRandomString() {
   return Math.random().toString(16).substr(2, 6);
 }
 
+
+//these next 3 functions can be refactored into one, investigate later
 function emailLookUp(data, emailToFind) {
   for (const user in data) {
     // console.log(users[user].email, emailToFind)
@@ -33,6 +35,25 @@ function emailLookUp(data, emailToFind) {
     }
   }
   return false
+}
+
+function passwordLookUp(data, passwordToFind) {
+  for (const user in data) {
+    // console.log(users[user].email, emailToFind)
+    if (users[user].password === passwordToFind) {
+      return true
+    }
+  }
+  return false
+}
+
+function userLookUp(data, userEmail) {
+  for (const user in data) {
+    // console.log(users[user].email, emailToFind)
+    if (users[user].email === userEmail) {
+      return user
+    }
+  }
 }
 
 //GLOBAL OBJECTS
@@ -52,6 +73,11 @@ const users = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
+  },
+  "user3RandomID": {
+    id: "user3RandomID",
+    email: "hello@hello.hello",
+    password: "123"
   }
 }
 
@@ -61,18 +87,12 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-  };
-  
-  res.render("urls_new", templateVars);
-});
 
 
 //
 //// POSTS
 //
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   console.log('hello, this is the request', req.body) //log the post request to delete data to the console
   // console.log(req.body.shortURL)
@@ -108,7 +128,6 @@ app.post(`/register`, (req, res) => {
     res.status(400).send('Bad Request')
     return;
   }
-  
   const newID = generateRandomString()
   users[newID] = {}
   users[newID].id = newID
@@ -121,7 +140,15 @@ app.post(`/register`, (req, res) => {
 
 app.post("/login", (req, res) => {
   console.log(req.body)
-  res.cookie("username", req.body.username);
+  if (emailLookUp(users, req.body.email) === false) {
+    res.status(403).send('Bad credentials')
+  } 
+  if (passwordLookUp(users, req.body.password) === false) {
+    res.status(403).send('Bad credentials')
+  }
+  const setid = userLookUp(users, req.body.email)
+  res.cookie("user_id", setid)
+  // res.cookie("username", req.body.username);
   res.redirect(`/urls`)
 })
 
@@ -136,6 +163,12 @@ app.post("/logout", (req, res) => {
 //// GETS
 //
 
+app.get("/urls/new", (req, res) => {
+  const templateVars = { users, userid: req.cookies["user_id"] };
+  res.render("urls_new", templateVars);
+});
+
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, users, userid: req.cookies["user_id"]};
   res.render("urls_index", templateVars);
@@ -144,6 +177,11 @@ app.get("/urls", (req, res) => {
 app.get(`/register`, (req, res) => {
   const templateVars = {users, userid: req.cookies["user_id"]}
   res.render('register', templateVars)
+})
+
+app.get(`/login`, (req, res) => {
+  const templateVars = {users, userid: req.cookies["user_id"]}
+  res.render('login', templateVars)
 })
 
 app.get("/hello", (req, res) => {
