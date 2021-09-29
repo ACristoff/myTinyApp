@@ -11,9 +11,7 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-function generateRandomString() {
-  return Math.random().toString(16).substr(2, 6);
-}
+
 
 //EDGE CASES
 //READ AND WRITE TO A FILE TO KEEP THE "DATABASE" PERSISTENT
@@ -21,8 +19,23 @@ function generateRandomString() {
 //SEND PROPER STATUS CODES
 //HAVE GENERATE RANDOM STRING() CHECK IF THE STRING ALREADY EXISTS, IF SO RECURSIVELY RUN UNTIL A NEW ONE IS REACHED
 
+//HELPER FUNCTIONS
 
-//OBJECTS
+function generateRandomString() {
+  return Math.random().toString(16).substr(2, 6);
+}
+
+function emailLookUp(data, emailToFind) {
+  for (const user in data) {
+    // console.log(users[user].email, emailToFind)
+    if (users[user].email === emailToFind) {
+      return true
+    }
+  }
+  return false
+}
+
+//GLOBAL OBJECTS
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -83,13 +96,25 @@ app.post("/urls/:shortURL", (req, res) => {
 })
 
 app.post(`/register`, (req, res) => {
-  // console.log(req.body)
+  // checks for empty fields and returns 400 if true
+  if (req.body.email.length === 0 || req.body.password.length === 0) {
+    console.log('uh oh empty fields!')
+    res.status(400).send('Bad Request')
+    return;
+  }
+  //checks for existing email and returns 400 if true
+  if (emailLookUp(users, req.body.email)) {
+    console.log('uh oh email already exists!')
+    res.status(400).send('Bad Request')
+    return;
+  }
+  
   const newID = generateRandomString()
   users[newID] = {}
   users[newID].id = newID
   users[newID].email = req.body.email
   users[newID].password = req.body.password
-  console.log(users)
+  // console.log(users)
   res.cookie("user_id", newID)
   res.redirect(`/urls`)
 })
@@ -102,7 +127,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   console.log(req.body)
-  res.clearCookie('username')
+  res.clearCookie('user_id')
   res.redirect(`/urls`)
 })
 
@@ -112,23 +137,23 @@ app.post("/logout", (req, res) => {
 //
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, users, userid: req.cookies["user_id"]};
   res.render("urls_index", templateVars);
 });
 
 app.get(`/register`, (req, res) => {
-  const templateVars = {username: req.cookies["username"]}
+  const templateVars = {users, userid: req.cookies["user_id"]}
   res.render('register', templateVars)
 })
 
 app.get("/hello", (req, res) => {
-  const templateVars = { greeting: 'Hello World!', username: req.cookies["username"] };
+  const templateVars = { greeting: 'Hello World!', users};
   res.render("hello_world", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   // const shortURL = req.params.shortURL
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], users, userid: req.cookies["user_id"]};
   res.render("urls_show", templateVars);
 });
 

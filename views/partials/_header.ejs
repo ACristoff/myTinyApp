@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <% if(!username){ %>
+    <% if(!userid){ %>
     <div class="navbar-login">
     <form class="form-inline" action="/login" method="POST">
       <div class="form-group mb-2" style="margin: auto;">
@@ -21,7 +21,7 @@
     </form>
     <% } else{ %>
     <div class="userinfo">
-      <p style= "font-size: 20px;"><%= username %></p>
+      <p style= "font-size: 20px;"><%= users[userid].email %></p>
       <form method="POST" action="/logout"><button type="submit">Logout</button></form>
     </div>
     <% } %>
