@@ -237,7 +237,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   // console.log(req.body)
-  res.clearCookie('user_id')
+  req.session = null
   res.redirect(`/urls`)
 })
 
