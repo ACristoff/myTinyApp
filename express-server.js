@@ -29,19 +29,25 @@ app.use(morgan('dev'));
 //READ AND WRITE TO A FILE TO KEEP THE "DATABASE" PERSISTENT
 //CREATE AN ACTUAL 404 PAGE
 //HAVE GENERATE RANDOM STRING() CHECK IF THE STRING ALREADY EXISTS, IF SO RECURSIVELY RUN UNTIL A NEW ONE IS REACHED
+//TIMESTAMPS OF LATEST VISITS
+//UNIQUE VISITOR TRACKING
+//METHOD OVERRIDE
 
 //SEND PROPER STATUS CODES // DONE
+//COUNTER FOR URL VISITS //DONE
 
 
 //GLOBAL OBJECTS
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
+    userID: "aJ48lW",
+    viewsTotal: 0
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW"
+    userID: "aJ48lW",
+    viewsTotal: 10
   }
 };
 const users = {
@@ -82,30 +88,23 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.status(401).send('Unauthorized. You do not have authorization to delete or edit this link');
     return;
   }
-  // console.log('hello, this is the request', req.body) //log the post request to delete data to the console
-  // console.log(req.body.shortURL)
   delete urlDatabase[req.body.shortURL];
   res.redirect(`/urls/`);
 });
 
 app.post("/urls", (req, res) => {
-  // console.log((req.cookies['user_ID'] === undefined))
   if (req.session.user_id === undefined) {
     res.status(400).send('You are not logged in. Only registered users can create links');
   }
-  // console.log(req.body, generateRandomString());  // Log the POST request body to the console
-  // console.log(req.body)
   const newShort = generateRandomString();
   urlDatabase[newShort] = {};
   urlDatabase[newShort].longURL = req.body.longURL;
   urlDatabase[newShort].userID = req.session.user_id;
-  // urlDatabase[newShort] = req.body.longURL
-  // console.log(urlDatabase)
-  res.redirect(`/urls/${newShort}`);       // Respond with 'Ok' (we will replace this)
+  urlDatabase[newShort].viewsTotal = 0;
+  res.redirect(`/urls/${newShort}`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  // console.log(req.body)
   if (req.session.user_id === undefined) {
     res.status(401).send('Unauthorized. Please sign in.');
     return;
@@ -137,14 +136,11 @@ app.post(`/register`, (req, res) => {
   users[newID].email = req.body.email;
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   users[newID].password = hashedPassword;
-  // console.log(users)
   req.session.user_id = newID;
-  // res.cookie("user_id", newID)
   res.redirect(`/urls`);
 });
 
 app.post("/login", (req, res) => {
-  // console.log(req.body)
   if (emailLookUp(users, req.body.email) === false) {
     res.status(403).send('Bad credentials');
   }
@@ -152,15 +148,11 @@ app.post("/login", (req, res) => {
   if (passwordLookUp(users, req.body.password, setid) === false) {
     res.status(403).send('Bad credentials');
   }
-  
-  // res.cookie("user_id", setid)
   req.session.user_id = setid;
-  // res.cookie("username", req.body.username);
   res.redirect(`/urls`);
 });
 
 app.post("/logout", (req, res) => {
-  // console.log(req.body)
   req.session = null;
   res.redirect(`/urls`);
 });
@@ -211,8 +203,7 @@ app.get("/urls/:shortURL", (req, res) => {
     res.redirect('/login');
     return;
   }
-  // const shortURL = req.params.shortURL
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, users, userid: req.session.user_id};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, users, userid: req.session.user_id, totalViews: urlDatabase[req.params.shortURL].viewsTotal};
   res.render("urls_show", templateVars);
 });
 
@@ -220,6 +211,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.status(404).send('This link does not exist');
   }
+  urlDatabase[req.params.shortURL].viewsTotal += 1;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
