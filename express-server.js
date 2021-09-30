@@ -11,7 +11,14 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const bcrypt = require('bcryptjs');
 
+const morgan = require('morgan');
+app.use(morgan('dev'));
+// const password = "dishwasher-funk"; // found in the req.params object
+// const hashedPassword = bcrypt.hashSync(password, 10);
+
+// console.log(hashedPassword)
 
 //EDGE CASES
 //READ AND WRITE TO A FILE TO KEEP THE "DATABASE" PERSISTENT
@@ -39,10 +46,15 @@ function emailLookUp(data, emailToFind) {
 
 function passwordLookUp(data, passwordToFind) {
   for (const user in data) {
-    // console.log(users[user].email, emailToFind)
-    if (users[user].password === passwordToFind) {
+
+    if (bcrypt.compareSync(passwordToFind, users[user].password)) {
       return true
-    }
+    }; 
+    // returns true
+    // console.log(users[user].email, emailToFind)
+    // if (users[user].password === passwordToFind) {
+    //   return true
+    // }
   }
   return false
 }
@@ -56,16 +68,17 @@ function userLookUp(data, userEmail) {
   }
 }
 
+//generates an object of urls for the logged in user
 function urlsForUser(id) {
   const userURLs = {}
   for (link in urlDatabase) {
     if (urlDatabase[link].userID === id) {
-      console.log(link)
+      // console.log(link)
       userURLs[link] = {}
       userURLs[link].longURL = urlDatabase[link].longURL
     }
   }
-  console.log(userURLs)
+  // console.log(userURLs)
   return userURLs;
 }
 
@@ -93,17 +106,17 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "$2a$10$8H4Wfcwa4xTkg8BkHyce0uJoKqtkfaQf9iTG3dt4eFpHn9CDIlS7a"
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "$2a$10$tNdp0ybbUMDaVGkHJQEpI.87ny5O4iah0dNfeCos0rZEe1L2red0K"
   },
   "aJ48lW": {
     id: "aJ48lW",
     email: "hello@hello.hello",
-    password: "123"
+    password: "$2a$10$8hWttZ.mF19RfGbfZxPaseqpcvrnbpWK5.OGmJGXhXR5n6/UlRfRq"
   }
 }
 
@@ -146,12 +159,12 @@ app.post("/urls", (req, res) => {
   urlDatabase[newShort].longURL = req.body.longURL
   urlDatabase[newShort].userID = req.cookies.user_id
   // urlDatabase[newShort] = req.body.longURL
-  console.log(urlDatabase)
+  // console.log(urlDatabase)
   res.redirect(`/urls/${newShort}`);       // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  console.log(req.body)
+  // console.log(req.body)
   if (req.cookies['user_id'] === undefined) {
     res.status(401).send('Unauthorized. Please sign in.')
     return;
@@ -181,14 +194,15 @@ app.post(`/register`, (req, res) => {
   users[newID] = {}
   users[newID].id = newID
   users[newID].email = req.body.email
-  users[newID].password = req.body.password
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+  users[newID].password = hashedPassword
   // console.log(users)
   res.cookie("user_id", newID)
   res.redirect(`/urls`)
 })
 
 app.post("/login", (req, res) => {
-  console.log(req.body)
+  // console.log(req.body)
   if (emailLookUp(users, req.body.email) === false) {
     res.status(403).send('Bad credentials')
   } 
@@ -202,7 +216,7 @@ app.post("/login", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-  console.log(req.body)
+  // console.log(req.body)
   res.clearCookie('user_id')
   res.redirect(`/urls`)
 })
@@ -228,7 +242,7 @@ app.get("/urls", (req, res) => {
     return;
   }
   myLinks = urlsForUser(req.cookies["user_id"]);
-  console.log(myLinks)
+  // console.log(myLinks)
   const templateVars = { urls: myLinks, users, userid: req.cookies["user_id"]};
   res.render("urls_index", templateVars);
 });
