@@ -1,56 +1,49 @@
+const bcrypt = require('bcryptjs');
+
 //HELPER FUNCTIONS
 
-function generateRandomString() {
+//Generates a random string
+const generateRandomString = function() {
   return Math.random().toString(16).substr(2, 6);
-}
+};
 
-
-//these next 3 functions can be refactored into one, investigate later, until then my code is a little wet
-function emailLookUp(data, emailToFind) {
+//looks up an email and returns true or false
+const emailLookUp = function(data, emailToFind) {
   for (const user in data) {
-    // console.log(users[user].email, emailToFind)
-    if (users[user].email === emailToFind) {
-      return true
+    if (data[user].email === emailToFind) {
+      return true;
     }
   }
-  return false
+  return false;
 }
 
-function passwordLookUp(data, passwordToFind) {
-  for (const user in data) {
-
-    if (bcrypt.compareSync(passwordToFind, users[user].password)) {
-      return true
-    }; 
-    // returns true
-    // console.log(users[user].email, emailToFind)
-    // if (users[user].password === passwordToFind) {
-    //   return true
-    // }
+//checks to see if two passwords match from the database, target user, and the inputted password
+const passwordLookUp = function(data, passwordToFind, targetUser) {
+  if (bcrypt.compareSync(passwordToFind, data[targetUser].password)) {
+    return true;
   }
-  return false
+  return false;
 }
 
-function userLookUp(data, userEmail) {
+//returns a user based on an email
+const userLookUp = function(data, userEmail) {
   for (const user in data) {
-    // console.log(users[user].email, emailToFind)
     if (data[user].email === userEmail) {
-      return user
+      console.log(user);
+      return user;
     }
   }
 }
 
 //generates an object of urls for the logged in user
-function urlsForUser(id) {
-  const userURLs = {}
-  for (link in urlDatabase) {
-    if (urlDatabase[link].userID === id) {
-      // console.log(link)
-      userURLs[link] = {}
-      userURLs[link].longURL = urlDatabase[link].longURL
+function urlsForUser(id, data) {
+  const userURLs = {};
+  for (link in data) {
+    if (data[link].userID === id) {
+      userURLs[link] = {};
+      userURLs[link].longURL = data[link].longURL;
     }
   }
-  // console.log(userURLs)
   return userURLs;
 }
 
