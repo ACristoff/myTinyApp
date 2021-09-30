@@ -26,7 +26,7 @@ function generateRandomString() {
 }
 
 
-//these next 3 functions can be refactored into one, investigate later
+//these next 3 functions can be refactored into one, investigate later, until then my code is a little wet
 function emailLookUp(data, emailToFind) {
   for (const user in data) {
     // console.log(users[user].email, emailToFind)
@@ -56,12 +56,38 @@ function userLookUp(data, userEmail) {
   }
 }
 
+function urlsForUser(id) {
+  const userURLs = {}
+  for (link in urlDatabase) {
+    if (urlDatabase[link].userID === id) {
+      console.log(link)
+      userURLs[link] = {}
+      userURLs[link].longURL = urlDatabase[link].longURL
+    }
+  }
+  console.log(userURLs)
+  return userURLs;
+}
+
+
 //GLOBAL OBJECTS
 
+//NEW DATABASE OBJECT YEAH WOOOO LOVE IT!!!
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
+
+// const urlDatabase= {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
 const users = { 
   "userRandomID": {
@@ -74,8 +100,8 @@ const users = {
     email: "user2@example.com", 
     password: "dishwasher-funk"
   },
-  "user3RandomID": {
-    id: "user3RandomID",
+  "aJ48lW": {
+    id: "aJ48lW",
     email: "hello@hello.hello",
     password: "123"
   }
@@ -94,24 +120,47 @@ app.get("/", (req, res) => {
 //
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  console.log('hello, this is the request', req.body) //log the post request to delete data to the console
+  if (req.cookies['user_id'] === undefined) {
+    res.status(401).send('Unauthorized. Please sign in.')
+    return;
+  }
+  if (req.cookies['user_id'] !== urlDatabase[req.body.shortURL].userID) {
+    res.status(401).send('Unauthorized. You do not have authorization to delete or edit this link')
+    return;
+  }
+  // console.log('hello, this is the request', req.body) //log the post request to delete data to the console
   // console.log(req.body.shortURL)
   delete urlDatabase[req.body.shortURL]
   res.redirect(`/urls/`); 
 })
 
 app.post("/urls", (req, res) => {
+  // console.log((req.cookies['user_ID'] === undefined))
+  if (req.cookies['user_id'] === undefined) {
+    res.status(400).send('You are not logged in. Only registered users can create links')
+  }
   // console.log(req.body, generateRandomString());  // Log the POST request body to the console
   // console.log(req.body)
   const newShort = generateRandomString()
-  urlDatabase[newShort] = req.body.longURL
+  urlDatabase[newShort] = {}
+  urlDatabase[newShort].longURL = req.body.longURL
+  urlDatabase[newShort].userID = req.cookies.user_id
+  // urlDatabase[newShort] = req.body.longURL
   console.log(urlDatabase)
   res.redirect(`/urls/${newShort}`);       // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:shortURL", (req, res) => {
   console.log(req.body)
-  urlDatabase[req.body.shortURL] = req.body.longURL
+  if (req.cookies['user_id'] === undefined) {
+    res.status(401).send('Unauthorized. Please sign in.')
+    return;
+  }
+  if (req.cookies['user_id'] !== urlDatabase[req.body.shortURL].userID) {
+    res.status(401).send('Unauthorized. You do not have authorization to delete or edit this link')
+    return;
+  }
+  urlDatabase[req.body.shortURL].longURL = req.body.longURL
   res.redirect(`/urls/`)
 })
 
@@ -164,13 +213,23 @@ app.post("/logout", (req, res) => {
 //
 
 app.get("/urls/new", (req, res) => {
+  if (req.cookies['user_id'] === undefined) {
+    res.status(401).send('Unauthorized. Please sign in.')
+    return;
+  }
   const templateVars = { users, userid: req.cookies["user_id"] };
   res.render("urls_new", templateVars);
 });
 
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, users, userid: req.cookies["user_id"]};
+  if (req.cookies['user_id'] === undefined) {
+    res.status(401).send('Unauthorized. Please sign in.')
+    return;
+  }
+  myLinks = urlsForUser(req.cookies["user_id"]);
+  console.log(myLinks)
+  const templateVars = { urls: myLinks, users, userid: req.cookies["user_id"]};
   res.render("urls_index", templateVars);
 });
 
@@ -190,13 +249,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (req.cookies['user_id'] === undefined) {
+    res.redirect('/login')
+    return;
+  }
   // const shortURL = req.params.shortURL
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], users, userid: req.cookies["user_id"]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, users, userid: req.cookies["user_id"]};
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 });
 
