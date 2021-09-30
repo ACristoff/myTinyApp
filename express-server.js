@@ -24,6 +24,10 @@ const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
 app.use(morgan('dev'));
+
+const { generateRandomString } = require('./helpers.js')
+// const { fetchBreedDescription } = require('./breedFetcher');
+
 // const password = "dishwasher-funk"; // found in the req.params object
 // const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -36,10 +40,6 @@ app.use(morgan('dev'));
 //HAVE GENERATE RANDOM STRING() CHECK IF THE STRING ALREADY EXISTS, IF SO RECURSIVELY RUN UNTIL A NEW ONE IS REACHED
 
 //HELPER FUNCTIONS
-
-function generateRandomString() {
-  return Math.random().toString(16).substr(2, 6);
-}
 
 
 //these next 3 functions can be refactored into one, investigate later, until then my code is a little wet
