@@ -259,6 +259,9 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    res.status(404).send('This link does not exist')
+  }
   const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 });
